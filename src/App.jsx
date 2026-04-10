@@ -13,7 +13,7 @@ const BALL_COLORS = {
 };
 
 const HEADER_COLORS = {
-  B: "#E53935", I: "#1565C0", N: "#6A1B9A", G: "#2E7D32", O: "#E65100",
+  B: "#1565C0", I: "#1565C0", N: "#E53935", G: "#1565C0", O: "#1565C0",
 };
 
 function getBallLetter(n) {
@@ -41,28 +41,43 @@ function isCardFilled(grid) {
   return grid.every((col, ci) => col.every((val, ri) => (ci === 2 && ri === 2) || val !== ""));
 }
 
-// ── Default locked card (from screenshot) ──
-// Grid is col-major: grid[col][row], 5 cols × 5 rows
-// B(col0):1,4,6,9,11 | I(col1):16,20,29,30,25 | N(col2):31,36,FREE,32,45 | G(col3):47,49,56,51,50 | O(col4):66,69,65,71,75
-const 0003352 = [
-  ["1","15","14","2","11"],      // B
-  ["26","18","29","27","21"],  // I
-  ["43","36","FREE","31","39"],// N
-  ["49","46","47","52","51"],  // G
-  ["75","62","71","61","72"],  // O
+// ── 3 default locked cards ──
+// Grid is col-major: grid[col][row]  (B=col0, I=col1, N=col2, G=col3, O=col4)
+
+const CARD1_GRID = [
+  ["1","15","14","2","11"],       // B
+  ["26","18","29","27","21"],     // I
+  ["43","36","FREE","31","39"],   // N
+  ["49","46","47","52","51"],     // G
+  ["75","62","71","61","72"],     // O
 ];
 
-const DEFAULT_CARD = {
-  name: "Card 1",
-  grid: DEFAULT_CARD_GRID,
-  mode: "play",
-  locked: true, // cannot be edited, cleared, or removed
-};
+const CARD2_GRID = [
+  ["1","11","2","8","4"],        // B
+  ["30","21","18","26","27"],     // I
+  ["45","32","FREE","40","43"],   // N
+  ["48","53","51","60","54"],     // G
+  ["65","69","72","63","73"],     // O
+];
+
+const CARD3_GRID = [
+  ["2","11","8","6","7"],        // B
+  ["29","30","25","20","27"],     // I
+  ["43","35","FREE","44","45"],   // N
+  ["48","55","46","60","56"],     // G
+  ["63","69","70","66","75"],     // O
+];
+
+const DEFAULT_CARDS = [
+  { name: "0003352", grid: CARD1_GRID, mode: "play", locked: true, team: "Team Blue" },
+  { name: "0000181", grid: CARD2_GRID, mode: "play", locked: true, team: "Team Red" },
+  { name: "0003054", grid: CARD3_GRID, mode: "play", locked: true, team: "Team Blue" },
+];
 
 export default function BingoBallRecorder() {
   const [rounds, setRounds] = useState([[]]);
   const [currentRound, setCurrentRound] = useState(0);
-  const [cards, setCards] = useState([DEFAULT_CARD]);
+  const [cards, setCards] = useState(DEFAULT_CARDS);
   const [editingCard, setEditingCard] = useState(null);
   const [errors, setErrors] = useState({});
   const [manualInput, setManualInput] = useState("");
@@ -72,7 +87,6 @@ export default function BingoBallRecorder() {
   const calledNumbers = rounds[currentRound];
   const calledSet = new Set(calledNumbers);
 
-  // How many rounds each number has been called across ALL rounds
   function getCallCount(n) {
     return rounds.filter((r) => r.includes(n)).length;
   }
@@ -191,7 +205,6 @@ export default function BingoBallRecorder() {
         .btn-gray   { background: rgba(255,255,255,0.18); color: rgba(255,255,255,0.45); cursor: not-allowed; }
         .btn-gray:hover { filter: none; transform: none; }
 
-        /* Ball display board */
         .display-board { display: grid; grid-template-columns: repeat(15,1fr); gap: 5px; margin-bottom: 14px; }
         .display-ball { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; user-select: none; }
         .display-ball span { color: #fff; font-weight: 700; font-size: clamp(9px,1.5vw,15px); }
@@ -199,7 +212,6 @@ export default function BingoBallRecorder() {
         .col-label { color: rgba(255,255,255,0.85); font-size: clamp(10px,2vw,13px); }
         .col-count { color: #fff; font-size: clamp(16px,3vw,22px); font-weight: 700; }
 
-        /* Numpad — shows call count badges */
         .numpad { display: grid; grid-template-columns: repeat(15,1fr); gap: 5px; }
         .num-ball-wrap { position: relative; display: flex; flex-direction: column; align-items: center; }
         .num-ball {
@@ -210,28 +222,23 @@ export default function BingoBallRecorder() {
           position: relative;
         }
         .num-ball:hover { filter: brightness(1.12); transform: scale(1.06); }
-
-        /* Count badge — shows how many rounds this number was called */
         .call-count-badge {
-          position: absolute;
-          top: -5px; right: -5px;
+          position: absolute; top: -5px; right: -5px;
           min-width: 18px; height: 18px;
           background: #FFD700; color: #7B1212;
           border-radius: 10px; font-size: 10px; font-weight: 900;
           display: flex; align-items: center; justify-content: center;
           padding: 0 4px; line-height: 1;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.4);
-          z-index: 2;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.4); z-index: 2;
         }
 
-        /* Manual Caller */
         .manual-caller { background: rgba(0,0,0,0.25); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; }
         .caller-toggle-btn { background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.25); border-radius: 20px; color: #FFD700; font-size: clamp(11px,2vw,13px); font-weight: 700; padding: 4px 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.15s; white-space: nowrap; }
         .caller-toggle-btn:hover { background: rgba(255,215,0,0.18); }
-        .caller-body { overflow: hidden; transition: max-height 0.3s ease, opacity 0.25s ease; }
-        .caller-body.open { max-height: 300px; opacity: 1; margin-top: 12px; }
+        .caller-body { overflow: hidden; transition: max-height 0.35s ease, opacity 0.25s ease; }
+        .caller-body.open { max-height: 320px; opacity: 1; margin-top: 12px; }
         .caller-body.closed { max-height: 0; opacity: 0; margin-top: 0; }
-        .caller-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+        .caller-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
         .caller-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .caller-title { color: #FFD700; font-size: clamp(13px,2.5vw,15px); font-weight: 700; }
         .round-badge { background: rgba(255,215,0,0.18); border: 1.5px solid #FFD700; color: #FFD700; font-size: clamp(11px,2vw,13px); font-weight: 700; padding: 4px 12px; border-radius: 20px; }
@@ -249,7 +256,6 @@ export default function BingoBallRecorder() {
         .arrow-btn:last-child { border-radius: 0 0 16px 0; }
         .arrow-btn:hover { background: rgba(255,215,0,0.25); color: #FFD700; }
         .arrow-btn:active { background: rgba(255,215,0,0.4); }
-        .manual-num-input::placeholder { color: rgba(255,255,255,0.35); }
         .manual-error { color: #ff5252; font-size: clamp(11px,2vw,12px); }
         .chips-label { color: rgba(255,255,255,0.55); font-size: clamp(10px,1.8vw,12px); margin-bottom: 6px; }
         .called-chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 130px; overflow-y: auto; }
@@ -258,12 +264,12 @@ export default function BingoBallRecorder() {
         .chip-remove:hover { color: #fff; }
         .no-calls-hint { color: rgba(255,255,255,0.35); font-size: clamp(11px,2vw,12px); font-style: italic; }
 
-        /* Cards Grid */
         .cards-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 14px; }
         .card-item { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 10px 8px; display: flex; flex-direction: column; gap: 8px; border: 2px solid transparent; transition: border 0.2s, box-shadow 0.2s; position: relative; }
         .card-item.bingo-card-item { border-color: #4ade80; box-shadow: 0 0 14px rgba(74,222,128,0.3); }
         .card-item-header { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
         .card-item-name { font-size: clamp(10px,1.8vw,13px); font-weight: 700; color: #FFD700; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .team-tag { display: inline-block; font-size: clamp(9px,1.4vw,11px); font-weight: 800; padding: 2px 7px; border-radius: 10px; white-space: nowrap; letter-spacing: 0.5px; color: #fff; }
         .card-item-badge { font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 700; white-space: nowrap; }
         .badge-edit { background: rgba(255,165,0,0.25); color: #FFD700; }
         .badge-play { background: rgba(0,200,100,0.2); color: #4ade80; }
@@ -289,7 +295,6 @@ export default function BingoBallRecorder() {
         .add-card-tile { background: rgba(0,0,0,0.1); border-radius: 12px; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80px; cursor: pointer; border: 2px dashed rgba(255,255,255,0.3); transition: border 0.2s; }
         .add-card-tile:hover { border-color: rgba(255,215,0,0.5); }
 
-        /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
         .modal-box { background: linear-gradient(135deg, #7B1212, #C0392B); border-radius: 18px; padding: 20px 18px; width: 100%; max-width: 480px; border: 2px solid #FFD700; max-height: 90vh; overflow-y: auto; }
         .modal-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -309,7 +314,6 @@ export default function BingoBallRecorder() {
         .cell-error { font-size: clamp(7px,1.2vw,9px); color: #ff5252; margin-top: 1px; }
         .range-hint { font-size: clamp(7px,1.2vw,9px); color: rgba(255,255,255,0.35); margin-top: 1px; }
 
-        /* Numpad legend */
         .numpad-legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px; }
         .numpad-legend-item { display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,0.75); font-size: clamp(10px,1.8vw,12px); }
         .legend-swatch { width: 14px; height: 14px; border-radius: 4px; }
@@ -331,7 +335,7 @@ export default function BingoBallRecorder() {
 
       <div className="bingo-page">
 
-        {/* ── 1: Ball Display Board (SINGLE — no duplicate) ── */}
+        {/* ── 1: Ball Display Board ── */}
         <div className="bingo-card">
           <h1 className="bingo-title">🎯 Ball Recording — Round {currentRound + 1}</h1>
           <div className="bingo-controls">
@@ -364,9 +368,8 @@ export default function BingoBallRecorder() {
           </div>
         </div>
 
-        {/* ── 2: Number Pad — with round call count badges ── */}
+        {/* ── 2: Number Pad ── */}
         <div className="numpad-card">
-          {/* Legend */}
           <div className="numpad-legend">
             <div className="numpad-legend-item">
               <div className="legend-swatch" style={{ background: "#ADD8E6", border: "2px solid #90CAE8" }} />
@@ -377,35 +380,26 @@ export default function BingoBallRecorder() {
               <span>Called this round</span>
             </div>
             <div className="numpad-legend-item">
-              <div className="legend-swatch" style={{ background: "#ADD8E6", border: "2px solid #90CAE8", position: "relative", display: "inline-block" }} />
-              <div style={{ background: "#FFD700", color: "#7B1212", borderRadius: 8, fontSize: 9, fontWeight: 900, padding: "1px 4px" }}>2x</div>
+              <div style={{ background: "#FFD700", color: "#7B1212", borderRadius: 8, fontSize: 9, fontWeight: 900, padding: "1px 6px" }}>2x</div>
               <span>Called in multiple rounds</span>
             </div>
           </div>
-
           <div className="numpad">
             {Array.from({ length: 75 }, (_, i) => i + 1).map((n) => {
               const isCalledThisRound = calledSet.has(n);
-              const totalCount = getCallCount(n); // how many rounds called
-
+              const totalCount = getCallCount(n);
               return (
                 <div key={n} className="num-ball-wrap">
-                  <div
-                    onClick={() => toggle(n)}
-                    className="num-ball"
+                  <div onClick={() => toggle(n)} className="num-ball"
                     style={{
                       background: isCalledThisRound ? "#B0BEC5" : "#ADD8E6",
                       border: isCalledThisRound ? "3px solid #78909C" : "2px solid #90CAE8",
-                      color: "#000",
-                      opacity: isCalledThisRound ? 0.55 : 1,
+                      color: "#000", opacity: isCalledThisRound ? 0.55 : 1,
                     }}
                   >
                     {n}
-                    {/* Show count badge if called in ANY round */}
                     {totalCount > 0 && (
-                      <div className="call-count-badge">
-                        {totalCount}x
-                      </div>
+                      <div className="call-count-badge">{totalCount}x</div>
                     )}
                   </div>
                 </div>
@@ -438,48 +432,47 @@ export default function BingoBallRecorder() {
                 </button>
               </div>
             </div>
+
             <div className={`caller-body ${callerOpen ? "open" : "closed"}`}>
-            <div className="caller-input-row">
-              <div className={`input-with-arrows ${manualError ? "input-error" : ""}`}>
-                <input
-                  className="manual-num-input"
-                  type="number" min={1} max={75} value={manualInput}
-                  onChange={(e) => { setManualInput(e.target.value); setManualError(""); }}
-                  onKeyDown={handleManualKeyDown}
-                  placeholder="1–75"
-                />
-                <div className="arrow-btns">
-                  <button className="arrow-btn" onClick={() => {
-                    const cur = parseInt(manualInput) || 0;
-                    const next = Math.min(75, cur + 1);
-                    setManualInput(String(next)); setManualError("");
-                  }}>▲</button>
-                  <button className="arrow-btn" onClick={() => {
-                    const cur = parseInt(manualInput) || 2;
-                    const next = Math.max(1, cur - 1);
-                    setManualInput(String(next)); setManualError("");
-                  }}>▼</button>
+              <div className="caller-input-row">
+                <div className={`input-with-arrows ${manualError ? "input-error" : ""}`}>
+                  <input
+                    className="manual-num-input"
+                    type="number" min={1} max={75} value={manualInput}
+                    onChange={(e) => { setManualInput(e.target.value); setManualError(""); }}
+                    onKeyDown={handleManualKeyDown}
+                    placeholder="1–75"
+                  />
+                  <div className="arrow-btns">
+                    <button className="arrow-btn" onClick={() => {
+                      const cur = parseInt(manualInput) || 0;
+                      setManualInput(String(Math.min(75, cur + 1))); setManualError("");
+                    }}>▲</button>
+                    <button className="arrow-btn" onClick={() => {
+                      const cur = parseInt(manualInput) || 2;
+                      setManualInput(String(Math.max(1, cur - 1))); setManualError("");
+                    }}>▼</button>
+                  </div>
                 </div>
+                <button className="btn btn-gold" onClick={handleManualCall}>Call</button>
+                {manualError && <span className="manual-error">{manualError}</span>}
               </div>
-              <button className="btn btn-gold" onClick={handleManualCall}>Call</button>
-              {manualError && <span className="manual-error">{manualError}</span>}
+              {calledNumbers.length === 0 ? (
+                <span className="no-calls-hint">No numbers called yet — type a number and press Call or Enter</span>
+              ) : (
+                <>
+                  <div className="chips-label">{calledNumbers.length} number{calledNumbers.length !== 1 ? "s" : ""} called this round:</div>
+                  <div className="called-chips">
+                    {calledNumbers.map((n) => (
+                      <div key={n} className="called-chip" style={{ background: getBallColor(n) }}>
+                        <span>{getBallLetter(n)}{n}</span>
+                        <button className="chip-remove" onClick={() => handleManualRemove(n)} title={`Remove ${n}`}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
-            {calledNumbers.length === 0 ? (
-              <span className="no-calls-hint">No numbers called yet — type a number and press Call or Enter</span>
-            ) : (
-              <>
-                <div className="chips-label">{calledNumbers.length} number{calledNumbers.length !== 1 ? "s" : ""} called this round:</div>
-                <div className="called-chips">
-                  {calledNumbers.map((n) => (
-                    <div key={n} className="called-chip" style={{ background: getBallColor(n) }}>
-                      <span>{getBallLetter(n)}{n}</span>
-                      <button className="chip-remove" onClick={() => handleManualRemove(n)} title={`Remove ${n}`}>✕</button>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-            </div>{/* end caller-body */}
           </div>
 
           {/* Cards Grid */}
@@ -490,7 +483,10 @@ export default function BingoBallRecorder() {
               return (
                 <div key={idx} className={`card-item ${bingo ? "bingo-card-item" : ""}`}>
                   <div className="card-item-header">
-                    <span className="card-item-name" title={card.name}>{card.name}</span>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1, minWidth: 0 }}>
+                      <span className="card-item-name" title={card.name}>{card.name}</span>
+                      {card.team && <span className="team-tag" style={{ background: card.team === "Team Red" ? "#E53935" : "#1565C0" }}>{card.team}</span>}
+                    </div>
                     <span className={`card-item-badge ${card.locked ? (bingo ? "badge-bingo" : "badge-locked") : bingo ? "badge-bingo" : card.mode === "play" ? "badge-play" : "badge-edit"}`}>
                       {bingo ? "BINGO!" : card.locked ? "🔒 Default" : card.mode === "play" ? "▶ Play" : "✏ Edit"}
                     </span>
@@ -504,10 +500,12 @@ export default function BingoBallRecorder() {
                         const val = card.grid[col][row];
                         const isFree = col === 2 && row === 2;
                         const called = !isFree && val !== "" && (() => { const n = parseInt(val); return !isNaN(n) && calledSet.has(n); })();
+                        const isTeamRed = card.team === "Team Red";
+                        const cellBg = isFree ? "rgba(255,255,255,0.12)" : called ? "rgba(255,215,0,0.4)" : val ? (isTeamRed && col === 2 ? "rgba(220,50,50,0.55)" : "rgba(21,101,192,0.55)") : "rgba(0,0,0,0.2)";
                         return (
                           <div key={`${col}-${row}`}
                             className={`mini-cell ${isFree ? "mini-free" : called ? "mini-called" : val ? "" : "mini-empty"}`}
-                            style={{ background: isFree ? "rgba(255,255,255,0.12)" : called ? "rgba(255,215,0,0.4)" : val ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.2)" }}
+                            style={{ background: cellBg }}
                           >
                             {isFree ? "F" : val || "·"}
                           </div>
@@ -579,7 +577,7 @@ export default function BingoBallRecorder() {
                     const hasError = errors[key];
                     return (
                       <div key={key} className="card-cell"
-                        style={{ background: isFree ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)" }}>
+                        style={{ background: isFree ? "rgba(255,255,255,0.15)" : (card.team === "Team Red" && col === 2) ? "rgba(180,30,30,0.5)" : "rgba(21,101,192,0.4)" }}>
                         {isFree ? (
                           <span className="free-label">FREE</span>
                         ) : (

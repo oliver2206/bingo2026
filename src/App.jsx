@@ -199,7 +199,7 @@ export default function BingoBallRecorder() {
         .col-count { color: #fff; font-size: clamp(16px,3vw,22px); font-weight: 700; }
 
         /* Numpad — shows call count badges */
-        .numpad { display: grid; grid-template-columns: repeat(10,1fr); gap: 6px; }
+        .numpad { display: grid; grid-template-columns: repeat(15,1fr); gap: 5px; }
         .num-ball-wrap { position: relative; display: flex; flex-direction: column; align-items: center; }
         .num-ball {
           width: 100%; aspect-ratio: 1; border-radius: 8px;
@@ -305,13 +305,13 @@ export default function BingoBallRecorder() {
           .bingo-page { padding: 12px 8px; gap: 12px; }
           .bingo-card, .numpad-card, .card-section { padding: 14px 10px; border-radius: 12px; }
           .display-board { gap: 3px; }
-          .numpad { grid-template-columns: repeat(8,1fr); gap: 4px; }
+          .numpad { grid-template-columns: repeat(10,1fr); gap: 4px; }
           .cards-grid { grid-template-columns: repeat(3,1fr); gap: 10px; }
         }
         @media (max-width: 540px) {
           .cards-grid { grid-template-columns: repeat(2,1fr); }
           .display-board { grid-template-columns: repeat(10,1fr); gap: 3px; }
-          .numpad { grid-template-columns: repeat(6,1fr); gap: 3px; }
+          .numpad { grid-template-columns: repeat(8,1fr); gap: 3px; }
         }
       `}</style>
 
@@ -575,3 +575,4 @@ export default function BingoBallRecorder() {
     </>
   );
 }
+

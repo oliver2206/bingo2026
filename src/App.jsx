@@ -44,12 +44,12 @@ function isCardFilled(grid) {
 // ── Default locked card (from screenshot) ──
 // Grid is col-major: grid[col][row], 5 cols × 5 rows
 // B(col0):1,4,6,9,11 | I(col1):16,20,29,30,25 | N(col2):31,36,FREE,32,45 | G(col3):47,49,56,51,50 | O(col4):66,69,65,71,75
-const DEFAULT_CARD_GRID = [
-  ["1","4","6","9","11"],      // B
-  ["16","20","29","30","25"],  // I
-  ["31","36","FREE","32","45"],// N
-  ["47","49","56","51","50"],  // G
-  ["66","69","65","71","75"],  // O
+const 0003352 = [
+  ["1","15","14","2","11"],      // B
+  ["26","18","29","27","21"],  // I
+  ["43","36","FREE","31","39"],// N
+  ["49","46","47","52","51"],  // G
+  ["75","62","71","61","72"],  // O
 ];
 
 const DEFAULT_CARD = {
@@ -67,6 +67,7 @@ export default function BingoBallRecorder() {
   const [errors, setErrors] = useState({});
   const [manualInput, setManualInput] = useState("");
   const [manualError, setManualError] = useState("");
+  const [callerOpen, setCallerOpen] = useState(true);
 
   const calledNumbers = rounds[currentRound];
   const calledSet = new Set(calledNumbers);
@@ -225,6 +226,11 @@ export default function BingoBallRecorder() {
 
         /* Manual Caller */
         .manual-caller { background: rgba(0,0,0,0.25); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; }
+        .caller-toggle-btn { background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.25); border-radius: 20px; color: #FFD700; font-size: clamp(11px,2vw,13px); font-weight: 700; padding: 4px 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.15s; white-space: nowrap; }
+        .caller-toggle-btn:hover { background: rgba(255,215,0,0.18); }
+        .caller-body { overflow: hidden; transition: max-height 0.3s ease, opacity 0.25s ease; }
+        .caller-body.open { max-height: 300px; opacity: 1; margin-top: 12px; }
+        .caller-body.closed { max-height: 0; opacity: 0; margin-top: 0; }
         .caller-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
         .caller-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .caller-title { color: #FFD700; font-size: clamp(13px,2.5vw,15px); font-weight: 700; }
@@ -232,10 +238,18 @@ export default function BingoBallRecorder() {
         .round-select { padding: 5px 12px; border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; font-size: clamp(11px,2vw,13px); font-weight: 600; cursor: pointer; outline: none; }
         .round-select option { background: #7B1212; color: #fff; }
         .caller-input-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-        .manual-num-input { width: 90px; padding: 9px 14px; border-radius: 20px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.12); color: #fff; font-size: clamp(14px,3vw,18px); font-weight: 700; outline: none; text-align: center; transition: border 0.15s; }
+        .input-with-arrows { display: flex; align-items: center; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.3); border-radius: 20px; overflow: hidden; transition: border 0.15s; }
+        .input-with-arrows:focus-within { border-color: #FFD700; }
+        .input-with-arrows.input-error { border-color: #ff5252; }
+        .manual-num-input { width: 80px; padding: 9px 6px; border: none; background: transparent; color: #fff; font-size: clamp(14px,3vw,18px); font-weight: 700; outline: none; text-align: center; }
         .manual-num-input::placeholder { color: rgba(255,255,255,0.35); }
-        .manual-num-input:focus { border-color: #FFD700; }
-        .manual-num-input.input-error { border-color: #ff5252; }
+        .arrow-btns { display: flex; flex-direction: column; border-left: 1px solid rgba(255,255,255,0.2); }
+        .arrow-btn { background: rgba(255,255,255,0.08); border: none; color: #fff; cursor: pointer; padding: 3px 10px; font-size: 12px; line-height: 1; transition: background 0.12s; user-select: none; }
+        .arrow-btn:first-child { border-bottom: 1px solid rgba(255,255,255,0.15); border-radius: 0 16px 0 0; }
+        .arrow-btn:last-child { border-radius: 0 0 16px 0; }
+        .arrow-btn:hover { background: rgba(255,215,0,0.25); color: #FFD700; }
+        .arrow-btn:active { background: rgba(255,215,0,0.4); }
+        .manual-num-input::placeholder { color: rgba(255,255,255,0.35); }
         .manual-error { color: #ff5252; font-size: clamp(11px,2vw,12px); }
         .chips-label { color: rgba(255,255,255,0.55); font-size: clamp(10px,1.8vw,12px); margin-bottom: 6px; }
         .called-chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 130px; overflow-y: auto; }
@@ -416,19 +430,37 @@ export default function BingoBallRecorder() {
                   </select>
                 )}
               </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                 <button className="btn btn-green" onClick={addRound}>+ New Round</button>
                 <button className="btn btn-red" onClick={clearRound}>Clear Round</button>
+                <button className="caller-toggle-btn" onClick={() => setCallerOpen((o) => !o)}>
+                  {callerOpen ? "▲ Hide" : "▼ Show"}
+                </button>
               </div>
             </div>
+            <div className={`caller-body ${callerOpen ? "open" : "closed"}`}>
             <div className="caller-input-row">
-              <input
-                className={`manual-num-input ${manualError ? "input-error" : ""}`}
-                type="number" min={1} max={75} value={manualInput}
-                onChange={(e) => { setManualInput(e.target.value); setManualError(""); }}
-                onKeyDown={handleManualKeyDown}
-                placeholder="1–75"
-              />
+              <div className={`input-with-arrows ${manualError ? "input-error" : ""}`}>
+                <input
+                  className="manual-num-input"
+                  type="number" min={1} max={75} value={manualInput}
+                  onChange={(e) => { setManualInput(e.target.value); setManualError(""); }}
+                  onKeyDown={handleManualKeyDown}
+                  placeholder="1–75"
+                />
+                <div className="arrow-btns">
+                  <button className="arrow-btn" onClick={() => {
+                    const cur = parseInt(manualInput) || 0;
+                    const next = Math.min(75, cur + 1);
+                    setManualInput(String(next)); setManualError("");
+                  }}>▲</button>
+                  <button className="arrow-btn" onClick={() => {
+                    const cur = parseInt(manualInput) || 2;
+                    const next = Math.max(1, cur - 1);
+                    setManualInput(String(next)); setManualError("");
+                  }}>▼</button>
+                </div>
+              </div>
               <button className="btn btn-gold" onClick={handleManualCall}>Call</button>
               {manualError && <span className="manual-error">{manualError}</span>}
             </div>
@@ -447,6 +479,7 @@ export default function BingoBallRecorder() {
                 </div>
               </>
             )}
+            </div>{/* end caller-body */}
           </div>
 
           {/* Cards Grid */}
@@ -575,4 +608,3 @@ export default function BingoBallRecorder() {
     </>
   );
 }
-
